@@ -36,6 +36,7 @@ jobs:
       - name: Build Android APK
         run: |
           cd app/android
+          chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
         env:
           JAVA_OPTS: '-Xmx2048m'
