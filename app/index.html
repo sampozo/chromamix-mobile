@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>ChromaMix — Elite Art Assistant</title>
+    
+    <!-- Premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Safe area handling for notches */
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+
+            /* Original Palette */
+            --bg-app: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --accent-color: #38bdf8;
+            --radius: 20px;
+
+            /* Premium glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
+
+            /* Accent gradient */
+            --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #764ba2 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: calc(12px + var(--safe-top)) calc(12px + var(--safe-right)) calc(12px + var(--safe-bottom)) calc(12px + var(--safe-left));
+        }
+
+        .mobile-frame {
+            width: 100%;
+            max-width: 390px;
+            height: 100%;
+            min-height: calc(100vh - 24px - var(--safe-top) - var(--safe-bottom));
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--glass-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.03);
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: var(--text-main);
+            text-align: center;
+        }
+
+        header h1 span {
+            color: var(--accent-color);
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+
+        .setup-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            gap: 24px;
+            text-align: center;
+        }
+
+        .setup-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: var(--accent-color);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .setup-screen h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .setup-screen p {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 260px;
+            line-height: 1.6;
+        }
+
+        .btn-action {
+            background: var(--accent-gradient);
+            color: #fff;
+            border: none;
+            padding: 18px 32px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            max-width: 260px;
+            transition: transform 0.15s ease, box-shadow 0.2s ease;
+            box-shadow: 0 8px 16px rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-action:active {
+            transform: scale(0.96);
+        }
+
+        .setup-viewer {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            display: none;
+            overflow: hidden;
+            transition: border-color 0.3s ease;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .border-red { border: 4px solid #ef4444; }
+        .border-blink-red { border: 4px solid #ef4444; animation: borderPulseRed 0.6s infinite alternate; }
+        .border-green { border: 4px solid #22c55e; box-shadow: 0 0 30px rgba(34, 197, 94, 0.4); }
+
+        @keyframes borderPulseRed {
+            from { border-color: rgba(239, 68, 68, 0.3); }
+            to { border-color: rgba(239, 68, 68, 1); }
+        }
+
+        #setup-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+
+        .calibration-timer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 700;
+            color: #fff;
+            backdrop-filter: blur(8px);
+            z-index: 5;
+        }
+
+        .setup-footer-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            opacity: 0.5;
+            font-family: 'JetBrains Mono', monospace;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+        }
+
+        /* --- APP MAIN SCREEN --- */
+        .app-screen {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-mode {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-mode.active {
+            background: var(--accent-gradient);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+        }
+
+        .viewer-box {
+            width: 100%;
+            height: 240px;
+            background: #000;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: var(--glass-shadow);
+        }
+
+        #webcam {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-text {
+            font-size: 14px;
+            color: var(--text-main);
+            text-align: center;
+            z-index: 2;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 12px 24px;
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .color-panel {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--glass-bg);
+            padding: 16px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.1);
+            background-color: #334155;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .color-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .mix-results {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: var(--glass-bg);
+            padding: 18px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .mix-bar { display: flex; flex-direction: column; gap: 6px; }
+        .mix-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+        .progress-bg { width: 100%; height: 10px; background: rgba(255, 255, 255, 0.05); border-radius: 5px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; border-radius: 5px; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .fill-red { background: linear-gradient(90deg, #ef4444, #f87171); }
+        .fill-yellow { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .fill-blue { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .fill-white { background: #f8fafc; border-right: 1px solid #ddd; }
+
+        #file-input { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-frame">
+        <header>
+            <h1>Chroma<span>Mix</span></h1>
+            <p>Precisión de color para artistas de élite</p>
+        </header>
+
+        <div class="content">
+            
+            <div class="setup-screen" id="setup-panel">
+                <div id="setup-content-wrapper" style="display: contents;">
+                    <div class="setup-icon" id="setup-icon">📷</div>
+                    <h2 id="setup-title">Paso 1: Habilitar Cámara</h2>
+                    <p id="setup-desc">Para capturar colores reales, ChromaMix requiere acceso a la cámara de tu dispositivo.</p>
+                    
+                    <div class="setup-viewer" id="setup-viewer-box">
+                        <video id="setup-video" autoplay playsinline muted></video>
+                        <div class="calibration-timer" id="calibration-counter" style="display: none;">—</div>
+                    </div>
+
+                    <button class="btn-action btn-premium" id="btn-main-setup" onclick="handleSetupClick()">Habilitar Cámara</button>
+                </div>
+
+                <div class="setup-footer-text">CHROMA MIX ENGINE v3.0</div>
+            </div>
+
+            <div class="app-screen" id="app-panel">
+                <div class="mode-selector">
+                    <button class="btn-mode active" id="btn-camera" onclick="switchMode('camera')">Cámara</button>
+                    <button class="btn-mode" id="btn-upload" onclick="switchMode('upload')">Subir Foto</button>
+                </div>
+
+                <div class="viewer-box" id="viewer-container">
+                    <video id="webcam" autoplay playsinline style="display: none;"></video>
+                    <canvas id="image-canvas" style="display: none;"></canvas>
+                    <div class="upload-text" id="upload-placeholder" style="display: none;">Toca para cargar imagen</div>
+                </div>
+
+                <div class="color-panel glass-card">
+                    <div class="color-swatch" id="selected-color-swatch"></div>
+                    <div class="color-info">
+                        <div id="hex-value" style="font-weight: 700; font-size: 18px; letter-spacing: 0.5px;">#334155</div>
+                        <div id="rgb-value" style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono';">rgb(51, 65, 85)</div>
+                    </div>
+                </div>
+
+                <div class="mix-results glass-card">
+                    <div class="mix-bar"><div class="mix-label"><span>Rojo</span><span id="pct-red">0%</span></div><div class="progress-bg"><div class="progress-fill fill-red" id="bar-red"></div></div></div>
+                    <div class="mix-bar"><div class="mix-label"><span>Amarillo</span><span id="pct-yellow">0%</span></div><div class="progress-bg"><div class="progress-fill fill-yellow" id="bar-yellow"></div></div></div>
+                    <div class="mix-bar"><div class="mix-label"><span>Azul</span><span id="pct-blue">0%</span></div><div class="progress-bg"><div class="progress-fill fill-blue" id="bar-blue"></div></div></div>
+                    <div class="mix-bar"><div class="mix-label"><span>Blanco</span><span id="pct-white">0%</span></div><div class="progress-bg"><div class="progress-fill fill-white" id="bar-white"></div></div></div>
+                </div>
+                
+                <input type="file" id="file-input" accept="image/*">
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Haptic Feedback Helper
+        function triggerHaptic() {
+            if (navigator.vibrate) {
+                navigator.vibrate(10);
+            }
+        }
+
+        // Add haptic to all buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', triggerHaptic);
+        });
+
+        const setupPanel = document.getElementById('setup-panel');
+        const appPanel = document.getElementById('app-panel');
+        const setupIcon = document.getElementById('setup-icon');
+        const setupTitle = document.getElementById('setup-title');
+        const setupDesc = document.getElementById('setup-desc');
+        const btnMainSetup = document.getElementById('btn-main-setup');
+        const setupVideo = document.getElementById('setup-video');
+        const setupViewerBox = document.getElementById('setup-viewer-box');
+        const calibCounter = document.getElementById('calibration-counter');
+
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('image-canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const fileInput = document.getElementById('file-input');
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        const viewerContainer = document.getElementById('viewer-container');
+
+        let stream = null;
+        let flowStep = 1; 
+        let rFactor = 1.0, gFactor = 1.0, bFactor = 1.0;
+        let prevFrameData = null;
+        let stillTime = 0;
+        const checkInterval = 300;
+        let calibrationInterval = null;
+        let appInterval = null;
+        let hasImage = false;
+        let currentMode = 'camera';
+
+        async function handleSetupClick() {
+            if (flowStep === 1) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        } 
+                    });
+                    setupVideo.srcObject = stream;
+                    setupViewerBox.style.display = 'block';
+                    setupViewerBox.className = "setup-viewer border-red";
+                    calibCounter.style.display = 'flex';
+                    
+                    setupIcon.innerText = "🎯";
+                    setupTitle.innerText = "Paso 2: Calibrando Blanco";
+                    btnMainSetup.style.display = 'none';
+                    flowStep = 2;
+
+                    startCalibration();
+                } catch (err) {
+                    alert("Se requiere acceso a la cámara.");
+                }
+            }
+        }
+
+        function startCalibration() {
+            calibrationInterval = setInterval(() => {
+                if (!setupVideo.videoWidth) return;
+
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 40; tempCanvas.height = 40;
+                const tCtx = tempCanvas.getContext('2d');
+                tCtx.drawImage(setupVideo, 0, 0, 40, 40);
+
+                const frameData = tCtx.getImageData(0, 0, 40, 40).data;
+                const p = tCtx.getImageData(20, 20, 1, 1).data;
+
+                const isWhite = p[0] > 145 && p[1] > 145 && p[2] > 145 && Math.max(Math.abs(p[0]-p[1]), Math.abs(p[1]-p[2])) < 45;
+
+                if (prevFrameData && isWhite) {
+                    stillTime += checkInterval;
+                    setupViewerBox.className = "setup-viewer border-blink-red";
+                    calibCounter.innerText = Math.max(1, Math.ceil((3000 - stillTime) / 1000));
+                    
+                    if (stillTime >= 3000) {
+                        clearInterval(calibrationInterval);
+                        rFactor = 255 / p[0]; gFactor = 255 / p[1]; bFactor = 255 / p[2];
+                        setupViewerBox.className = "setup-viewer border-green";
+                        calibCounter.innerText = "0";
+                        setTimeout(enterApp, 600);
+                    }
+                } else {
+                    stillTime = 0;
+                    setupViewerBox.className = "setup-viewer border-red";
+                    calibCounter.innerText = "—";
+                }
+                prevFrameData = frameData;
+            }, checkInterval);
+        }
+
+        function enterApp() {
+            setupPanel.style.display = 'none';
+            appPanel.style.display = 'flex';
+            switchMode('camera');
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('btn-camera').classList.toggle('active', mode === 'camera');
+            document.getElementById('btn-upload').classList.toggle('active', mode === 'upload');
+
+            if (mode === 'camera') {
+                canvas.style.display = 'none';
+                uploadPlaceholder.style.display = 'none';
+                video.style.display = 'block';
+                video.srcObject = stream;
+                if (appInterval) clearInterval(appInterval);
+                appInterval = setInterval(analyzeCamera, 250);
+            } else {
+                if (appInterval) clearInterval(appInterval);
+                video.style.display = 'none';
+                canvas.style.display = 'block';
+                uploadPlaceholder.style.display = hasImage ? 'none' : 'flex';
+            }
+        }
+
+        function analyzeCamera() {
+            if (!video.videoWidth) return;
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 10; tempCanvas.height = 10;
+            const tCtx = tempCanvas.getContext('2d');
+            tCtx.drawImage(video, 0, 0, 10, 10);
+            const p = tCtx.getImageData(5, 5, 1, 1).data;
+            updateUI(p[0] * rFactor, p[1] * gFactor, p[2] * bFactor);
+        }
+
+        viewerContainer.onclick = () => {
+            if (currentMode === 'upload') {
+                if (!hasImage) fileInput.click();
+            }
+        };
+
+        canvas.onclick = (e) => {
+            if (currentMode !== 'upload' || !hasImage) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+            const p = ctx.getImageData(x, y, 1, 1).data;
+            updateUI(p[0], p[1], p[2]);
+        };
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    canvas.width = img.width; canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    hasImage = true;
+                    uploadPlaceholder.style.display = 'none';
+                    const p = ctx.getImageData(img.width/2, img.height/2, 1, 1).data;
+                    updateUI(p[0], p[1], p[2]);
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+        function updateUI(r, g, b) {
+            r = Math.min(255, Math.max(0, r));
+            g = Math.min(255, Math.max(0, g));
+            b = Math.min(255, Math.max(0, b));
+            const hex = "#" + ((1 << 24) + (Math.round(r) << 16) + (Math.round(g) << 8) + Math.round(b)).toString(16).slice(1).toUpperCase();
+            document.getElementById('selected-color-swatch').style.backgroundColor = hex;
+            document.getElementById('hex-value').innerText = hex;
+            document.getElementById('rgb-value').innerText = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+            
+            // Simplified RYB mixing logic
+            let rN = r/255, gN = g/255, bN = b/255;
+            let w = Math.min(rN, gN, bN);
+            let rP = rN - w, gP = gN - w, bP = bN - w;
+            let y = Math.min(rP, gP);
+            let red = rP - y;
+            let blue = bP;
+            let total = red + y + blue + w || 1;
+
+            const setBar = (id, pctId, val) => {
+                const pct = Math.round((val/total)*100);
+                document.getElementById(id).style.width = pct + "%";
+                document.getElementById(pctId).innerText = pct + "%";
+            };
+            setBar('bar-red', 'pct-red', red);
+            setBar('bar-yellow', 'pct-yellow', y);
+            setBar('bar-blue', 'pct-blue', blue);
+            setBar('bar-white', 'pct-white', w);
+        }
+    </script>
+</body>
+</html>

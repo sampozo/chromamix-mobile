@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ChromaMix</string>
+    <string name="title_activity_main">ChromaMix</string>
+    <string name="package_name">com.chromamix.app</string>
+    <string name="custom_url_scheme">com.chromamix.app</string>
+</resources>

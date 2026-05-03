@@ -1,0 +1,62 @@
+name: Android Build & Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # REQUIRED for releasing artifacts
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd app
+          npm ci
+          npx cap sync android
+
+      - name: Build Android APK
+        run: |
+          cd app/android
+          ./gradlew assembleDebug --no-daemon
+        env:
+          JAVA_OPTS: '-Xmx2048m'
+
+      - name: Find APK
+        id: find_apk
+        run: |
+          apk_path=$(find app/android -name "*.apk" -type f | head -1)
+          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+          ls -lh $apk_path
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: ${{ steps.find_apk.outputs.apk_path }}
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ steps.find_apk.outputs.apk_path }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
