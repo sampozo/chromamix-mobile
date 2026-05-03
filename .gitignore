@@ -33,3 +33,8 @@ Thumbs.db
 
 # CI/CD artifacts
 .github/workflows/build-*.log
+
+# User assets (NEVER commit)
+icon.png
+app/icon.png
+app/assets/
